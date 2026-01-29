@@ -2,7 +2,7 @@
 **Leuit Config Storage System**
 
 <p align="center">
-  <img src="assets/logo-leuitcss.png" alt="LeuitCSS Logo" width="180">
+  <img src="assets/logo-leuitcss.png" alt="LeuitCSS Logo" width="300">
 </p>
 
 ---
