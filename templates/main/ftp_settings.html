@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}ZTE FTP Ingestion{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-cloud-upload"></i> ZTE FTP Ingestion</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <!-- FTP Status Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-activity"></i> FTP Server Status
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted" style="width: 40%;">Status</td>
+                        <td>
+                            {% if ftp_status.running %}
+                            <span class="status-badge status-success">
+                                <i class="bi bi-check-circle"></i> Running
+                            </span>
+                            {% else %}
+                            <span class="status-badge status-failed">
+                                <i class="bi bi-x-circle"></i> Stopped
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Enabled</td>
+                        <td>
+                            {% if ftp_status.enabled %}
+                            <span class="badge bg-success">Yes</span>
+                            {% else %}
+                            <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Port</td>
+                        <td><code>{{ ftp_status.port }}</code></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Root Directory</td>
+                        <td><code>{{ ftp_status.root }}</code></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">pyftpdlib</td>
+                        <td>
+                            {% if ftp_status.available %}
+                            <span class="badge bg-success">Installed</span>
+                            {% else %}
+                            <span class="badge bg-danger">Not Installed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- FTP Control -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-sliders"></i> FTP Control
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('main.ftp_settings_update') }}">
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="ftp_enabled" name="ftp_enabled"
+                                   {% if ftp_status.enabled %}checked{% endif %}
+                                   {% if not ftp_status.available %}disabled{% endif %}>
+                            <label class="form-check-label" for="ftp_enabled">
+                                Enable FTP Server
+                            </label>
+                        </div>
+                        {% if not ftp_status.available %}
+                        <small class="text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> pyftpdlib not installed
+                        </small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="ftp_port" class="form-label">FTP Port</label>
+                        <input type="text" class="form-control" id="ftp_port" name="ftp_port" 
+                               value="21" readonly disabled
+                               style="background: var(--bg-main); cursor: not-allowed;">
+                        <small class="form-text">
+                            <i class="bi bi-info-circle"></i> Port 21 is fixed - ZTE OLT does not support custom FTP port
+                        </small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" {% if not ftp_status.available %}disabled{% endif %}>
+                        <i class="bi bi-save"></i> Save Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <!-- How It Works -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-question-circle"></i> How It Works
+            </div>
+            <div class="card-body">
+                <p>FTP Ingestion is a <strong>write-only</strong> channel for ZTE OLT devices to upload their <code>startrun.dat</code> configuration file.</p>
+                
+                <h6 class="mt-3">Upload Structure</h6>
+                <pre style="background: var(--bg-main); padding: 10px; border-radius: 4px; font-size: 0.85rem;">
+/ftp-root/zte/
+  &lt;device_name&gt;/
+    startrun.dat</pre>
+                
+                <p class="small text-muted mb-0">
+                    The folder name must match the device name registered in LeuitCSS.
+                </p>
+                
+                <h6 class="mt-3">Security</h6>
+                <ul class="small mb-0">
+                    <li>Write-only (no read, no list, no delete)</li>
+                    <li>Single global credential (configured in .env)</li>
+                    <li>Only accepts <code>startrun.dat</code> files</li>
+                    <li>ZTE devices only</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Credential Info -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-key"></i> FTP Credentials
+            </div>
+            <div class="card-body">
+                <p class="small text-muted">
+                    FTP credentials are configured via environment variables for security reasons.
+                </p>
+                
+                <table class="table table-sm table-borderless mb-3">
+                    <tr>
+                        <td class="text-muted">Username</td>
+                        <td><code>{{ ftp_username }}</code></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Password</td>
+                        <td><code>********</code> <small class="text-muted">(set in .env)</small></td>
+                    </tr>
+                </table>
+                
+                <p class="small mb-0">
+                    To change credentials, edit <code>/etc/leuitcss/leuitcss.env</code>:
+                </p>
+                <pre style="background: var(--bg-main); padding: 10px; border-radius: 4px; font-size: 0.8rem; margin-top: 8px;">
+LEUITCSS_FTP_USER=leuitcss
+LEUITCSS_FTP_PASSWORD=your_secure_password</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <small class="text-muted">
+        <i class="bi bi-info-circle"></i>
+        FTP is an <strong>ingestion channel only</strong>. It does not affect SSH/Telnet backup for other vendors.
+    </small>
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Schedule{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-calendar-check"></i> {{ action }} Schedule</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="device_id" class="form-label">Device *</label>
+                        {{ form.device_id(class="form-control" + (" is-invalid" if form.device_id.errors else "")) }}
+                        {% for error in form.device_id.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="frequency" class="form-label">Frequency *</label>
+                        {{ form.frequency(class="form-control" + (" is-invalid" if form.frequency.errors else "")) }}
+                        {% for error in form.frequency.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="time_hour" class="form-label">Hour (0-23) *</label>
+                            {{ form.time_hour(class="form-control" + (" is-invalid" if form.time_hour.errors else ""), placeholder="e.g., 2") }}
+                            {% for error in form.time_hour.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="time_minute" class="form-label">Minute (0-59) *</label>
+                            {{ form.time_minute(class="form-control" + (" is-invalid" if form.time_minute.errors else ""), placeholder="e.g., 0") }}
+                            {% for error in form.time_minute.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="weekly-options" style="display:none;">
+                        <label for="day_of_week" class="form-label">Days of Week</label>
+                        {{ form.day_of_week(class="form-control" + (" is-invalid" if form.day_of_week.errors else ""), placeholder="e.g., 0,2,4 for Mon,Wed,Fri") }}
+                        {% for error in form.day_of_week.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <small class="text-muted">0=Monday, 1=Tuesday, ..., 6=Sunday. Separate with commas.</small>
+                    </div>
+                    
+                    <div class="mb-3" id="monthly-options" style="display:none;">
+                        <label for="day_of_month" class="form-label">Day of Month</label>
+                        {{ form.day_of_month(class="form-control" + (" is-invalid" if form.day_of_month.errors else ""), placeholder="e.g., 1 or 15 or last") }}
+                        {% for error in form.day_of_month.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <small class="text-muted">1-31 or "last" for last day of month</small>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.is_active(class="form-check-input") }}
+                            <label class="form-check-label" for="is_active">
+                                Schedule is active
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> {{ action }} Schedule
+                        </button>
+                        <a href="{{ url_for('main.schedules') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Schedule Options
+            </div>
+            <div class="card-body">
+                <h6>Daily</h6>
+                <p class="small text-muted">Runs every day at the specified time.</p>
+                
+                <h6>Weekly</h6>
+                <p class="small text-muted">Runs on selected days of the week. Use numbers 0-6 (0=Monday).</p>
+                
+                <h6>Monthly</h6>
+                <p class="small text-muted">Runs on a specific day of each month. Use "last" for the last day.</p>
+                
+                <hr>
+                
+                <p class="small">
+                    <i class="bi bi-clock"></i> Times use server timezone.
+                </p>
+                
+                <p class="small mb-0">
+                    <i class="bi bi-arrow-repeat"></i> Failed backups retry once automatically.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const frequencySelect = document.getElementById('frequency');
+    const weeklyOptions = document.getElementById('weekly-options');
+    const monthlyOptions = document.getElementById('monthly-options');
+    
+    function updateOptions() {
+        const freq = frequencySelect.value;
+        weeklyOptions.style.display = freq === 'weekly' ? 'block' : 'none';
+        monthlyOptions.style.display = freq === 'monthly' ? 'block' : 'none';
+    }
+    
+    frequencySelect.addEventListener('change', updateOptions);
+    updateOptions();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}View Config - {{ backup.device_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1>
+            <span class="badge badge-vendor badge-{{ backup.vendor }} me-2">{{ backup.vendor|upper }}</span>
+            {{ backup.device_name }}
+        </h1>
+        <p class="text-muted mb-0">
+            Configuration from {{ backup.started_at.strftime('%Y-%m-%d %H:%M:%S') }}
+        </p>
+    </div>
+    <div class="btn-group">
+        <a href="{{ url_for('backup.backup_download', backup_id=backup.id) }}" class="btn btn-success">
+            <i class="bi bi-download"></i> Download
+        </a>
+        <a href="{{ url_for('backup.backup_detail', backup_id=backup.id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-info-circle"></i> Details
+        </a>
+    </div>
+</div>
+
+<div class="readonly-notice">
+    <i class="bi bi-shield-check"></i>
+    <strong>Read-Only View</strong> - This is a view-only display of the backup configuration. 
+    No modifications can be made. Download the file if you need to work with it externally.
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-file-code"></i> Configuration Content</span>
+        <small class="text-muted">{{ content|length }} characters</small>
+    </div>
+    <div class="card-body p-0">
+        <pre class="config-view mb-0">{{ content }}</pre>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('backup.backup_list') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+    <a href="{{ url_for('main.device_detail', device_id=backup.device_id) }}" class="btn btn-outline-primary">
+        <i class="bi bi-router"></i> View Device
+    </a>
+</div>
+{% endblock %}

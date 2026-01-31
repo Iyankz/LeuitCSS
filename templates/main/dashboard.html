@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% from "macros/vendor.html" import vendor_logo, vendor_icon %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+    <div class="text-end">
+        <div class="server-datetime mb-1">
+            <i class="bi bi-clock"></i>
+            <span id="server-time">{{ server_time.strftime('%H:%M:%S') }}</span>
+        </div>
+        <div class="server-date text-muted small">
+            <i class="bi bi-calendar3"></i>
+            <span id="server-date">{{ server_time.strftime('%A, %d %B %Y') }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="readonly-notice">
+    <i class="bi bi-shield-check"></i>
+    <strong>Read-Only Backup System</strong> - LeuitCSS performs read-only backup operations. No configuration changes can be made to devices.
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card primary">
+            <div class="stat-value">{{ total_devices }}</div>
+            <div class="stat-label">Total Devices</div>
+            <small>{{ active_devices }} active</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card success">
+            <div class="stat-value">{{ successful_backups }}</div>
+            <div class="stat-label">Successful Backups</div>
+            <small>of {{ total_backups }} total</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card warning">
+            <div class="stat-value">{{ active_schedules }}</div>
+            <div class="stat-label">Active Schedules</div>
+            <small>of {{ total_schedules }} total</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card danger">
+            <div class="stat-value">{{ failed_backups }}</div>
+            <div class="stat-label">Failed Backups</div>
+            <small>need attention</small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Backups -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history"></i> Recent Backups</span>
+                <a href="{{ url_for('backup.backup_list') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Vendor</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for backup in recent_backups %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('main.device_detail', device_id=backup.device_id) }}">
+                                    {{ backup.device_name }}
+                                </a>
+                            </td>
+                            <td>
+                                {{ vendor_icon(backup.vendor) }}
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ backup.status }}">
+                                    {% if backup.status == 'success' %}
+                                    <i class="bi bi-check-circle"></i>
+                                    {% elif backup.status == 'failed' %}
+                                    <i class="bi bi-x-circle"></i>
+                                    {% elif backup.status == 'timeout' %}
+                                    <i class="bi bi-clock"></i>
+                                    {% else %}
+                                    <i class="bi bi-hourglass"></i>
+                                    {% endif %}
+                                    {{ backup.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ backup.started_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </td>
+                            <td>
+                                {% if backup.file_path %}
+                                <a href="{{ url_for('backup.backup_download', backup_id=backup.id) }}" 
+                                   class="btn btn-sm btn-outline-success" title="Download">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('backup.backup_detail', backup_id=backup.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                No backups yet. Add devices and schedules to start backing up.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions & Info -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-lightning"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('main.device_add') }}" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-plus-lg"></i> Add New Device
+                </a>
+                <a href="{{ url_for('main.schedule_add') }}" class="btn btn-outline-primary w-100 mb-2">
+                    <i class="bi bi-calendar-plus"></i> Add Schedule
+                </a>
+                <a href="{{ url_for('backup.backup_stats') }}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-bar-chart"></i> View Statistics
+                </a>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-hdd"></i> Storage Info
+            </div>
+            <div class="card-body">
+                <p class="mb-2">
+                    <strong>Total Backups:</strong> {{ storage_stats.total_backups }}
+                </p>
+                <p class="mb-2">
+                    <strong>Storage Used:</strong> 
+                    {{ (storage_stats.total_size_bytes / 1024 / 1024)|round(2) }} MB
+                </p>
+                <hr>
+                <p class="mb-2"><strong>By Vendor:</strong></p>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for vendor, count in storage_stats.backups_by_vendor.items() %}
+                    <span class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded" style="background: var(--bg-main);">
+                        {{ vendor_icon(vendor) }}
+                        <small>{{ count }}</small>
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-check"></i> Scheduled Jobs
+            </div>
+            <div class="card-body">
+                {% if scheduled_jobs %}
+                <ul class="list-unstyled mb-0">
+                    {% for job in scheduled_jobs[:5] %}
+                    <li class="mb-2 pb-2 border-bottom">
+                        <small class="text-muted">{{ job.name }}</small><br>
+                        <small>Next: {{ job.next_run[:16] if job.next_run else 'N/A' }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if scheduled_jobs|length > 5 %}
+                <a href="{{ url_for('main.schedules') }}" class="btn btn-sm btn-link">
+                    View all {{ scheduled_jobs|length }} jobs
+                </a>
+                {% endif %}
+                {% else %}
+                <p class="text-muted mb-0">No scheduled jobs</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Update server time every second
+function updateServerTime() {
+    const timeEl = document.getElementById('server-time');
+    if (timeEl) {
+        // Parse current time and increment
+        const now = new Date();
+        // Offset from server time provided at page load
+        const serverTimeStr = '{{ server_time.strftime("%Y-%m-%dT%H:%M:%S") }}';
+        const pageLoadTime = new Date();
+        const serverTime = new Date(serverTimeStr);
+        const offset = serverTime.getTime() - pageLoadTime.getTime();
+        
+        const adjustedTime = new Date(now.getTime() + offset);
+        const hours = String(adjustedTime.getHours()).padStart(2, '0');
+        const mins = String(adjustedTime.getMinutes()).padStart(2, '0');
+        const secs = String(adjustedTime.getSeconds()).padStart(2, '0');
+        timeEl.textContent = `${hours}:${mins}:${secs}`;
+    }
+}
+setInterval(updateServerTime, 1000);
+</script>
+{% endblock %}
