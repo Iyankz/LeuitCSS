@@ -1,0 +1,40 @@
+# LeuitCSS v1.0.0 - Dependencies
+# Active Configuration Backup System
+
+# Web Framework
+Flask==3.0.0
+Werkzeug==3.0.1
+Jinja2==3.1.2
+
+# Database
+SQLAlchemy==2.0.23
+alembic==1.13.0
+
+# Scheduler
+APScheduler==3.10.4
+
+# SSH/Network Connections
+paramiko==3.4.0
+netmiko==4.3.0
+
+# Security - Encryption
+cryptography==41.0.7
+
+# Password Hashing
+bcrypt==4.1.1
+
+# Form Validation
+WTForms==3.1.1
+Flask-WTF==1.2.1
+
+# Configuration
+python-dotenv==1.0.0
+
+# Utilities
+pytz==2023.3
+
+# FTP Server (for ZTE OLT ingestion)
+pyftpdlib==1.5.9
+
+# Production Server
+gunicorn==21.2.0

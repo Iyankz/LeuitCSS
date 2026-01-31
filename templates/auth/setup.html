@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}System Not Initialized{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="LeuitCSS" class="login-logo mb-3">
+                        <h4 class="text-warning"><i class="bi bi-exclamation-triangle"></i> System Not Initialized</h4>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <p class="mb-2">
+                            The LeuitCSS system has not been initialized yet.
+                        </p>
+                        <p class="mb-0">
+                            Please run the initialization command on the server to create the admin account.
+                        </p>
+                    </div>
+                    
+                    <div class="bg-dark text-light p-3 rounded mb-4">
+                        <code class="text-success">leuitcss init</code>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <small>
+                            The initialization command will:
+                            <ul class="mb-0 mt-2">
+                                <li>Create the default admin account</li>
+                                <li>Generate a secure random password</li>
+                                <li>Display the credentials (shown only once)</li>
+                            </ul>
+                        </small>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                            <i class="bi bi-arrow-clockwise"></i> Try Again
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.login-logo {
+    max-width: 250px;
+    height: auto;
+}
+</style>
+{% endblock %}

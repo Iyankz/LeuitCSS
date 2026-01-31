@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Device{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-router"></i> {{ action }} Device</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="name" class="form-label">Device Name *</label>
+                            {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="e.g., Core-Router-01") }}
+                            {% for error in form.name.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="vendor" class="form-label">Vendor *</label>
+                            {{ form.vendor(class="form-select" + (" is-invalid" if form.vendor.errors else "")) }}
+                            {% for error in form.vendor.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        {{ form.description(class="form-control", rows=2, placeholder="Optional description") }}
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h5 class="mb-3"><i class="bi bi-ethernet"></i> Connection Details</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-5">
+                            <label for="ip_address" class="form-label">IP Address *</label>
+                            {{ form.ip_address(class="form-control" + (" is-invalid" if form.ip_address.errors else ""), placeholder="192.168.1.1") }}
+                            {% for error in form.ip_address.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="port" class="form-label">Port</label>
+                            <input type="text" 
+                                   name="port" 
+                                   id="port" 
+                                   class="form-control {% if form.port.errors %}is-invalid{% endif %}" 
+                                   placeholder="Default"
+                                   value="{{ form.port.data if form.port.data else '' }}"
+                                   pattern="[0-9]*"
+                                   inputmode="numeric"
+                                   autocomplete="off">
+                            {% for error in form.port.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <small class="form-text">SSH: 22 | Telnet: 23</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="connection_type" class="form-label">Connection *</label>
+                            {{ form.connection_type(class="form-select" + (" is-invalid" if form.connection_type.errors else "")) }}
+                            {% for error in form.connection_type.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h5 class="mb-3"><i class="bi bi-key"></i> Credentials</h5>
+                    <p class="form-text mb-3">
+                        <i class="bi bi-shield-lock"></i> Credentials are encrypted with AES-256
+                    </p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username *</label>
+                            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="admin", autocomplete="off") }}
+                            {% for error in form.username.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">
+                                Password {% if action == 'Add' %}*{% endif %}
+                            </label>
+                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), autocomplete="new-password") }}
+                            {% for error in form.password.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            {% if action == 'Edit' %}
+                            <small class="form-text">Leave blank to keep current password</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="enable_password" class="form-label">Enable Password</label>
+                        {{ form.enable_password(class="form-control", autocomplete="new-password") }}
+                        <small class="form-text">Required for Cisco devices with enable mode</small>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.is_active(class="form-check-input") }}
+                            <label class="form-check-label" for="is_active">
+                                Device is active (will be included in scheduled backups)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> {{ action }} Device
+                        </button>
+                        <a href="{{ url_for('main.devices') }}" class="btn btn-outline-secondary">Cancel</a>
+                        
+                        {% if device %}
+                        <button type="button" class="btn btn-outline-danger ms-auto" 
+                                data-bs-toggle="modal" data-bs-target="#deleteDeviceModal">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Vendor Information
+            </div>
+            <div class="card-body">
+                <div id="vendor-info">
+                    <p class="form-text">Select a vendor to see backup command details.</p>
+                </div>
+                
+                <div class="vendor-details" data-vendor="mikrotik" style="display:none;">
+                    <h6 style="color: #f1f5f9;">MikroTik</h6>
+                    <p><strong>Connection:</strong> SSH only</p>
+                    <p><strong>Command:</strong> <code>/export</code></p>
+                    <p><strong>Output:</strong> .rsc file</p>
+                </div>
+                
+                <div class="vendor-details" data-vendor="cisco" style="display:none;">
+                    <h6 style="color: #38bdf8;">Cisco</h6>
+                    <p><strong>Connection:</strong> SSH or Telnet</p>
+                    <p><strong>Command:</strong> <code>show running-config</code></p>
+                    <p><strong>Output:</strong> .txt file</p>
+                    <p class="form-text">Enable password required for privileged mode</p>
+                </div>
+                
+                <div class="vendor-details" data-vendor="huawei" style="display:none;">
+                    <h6 style="color: #f87171;">Huawei</h6>
+                    <p><strong>Connection:</strong> SSH or Telnet</p>
+                    <p><strong>Command:</strong> <code>display current-configuration</code></p>
+                    <p><strong>Output:</strong> .txt file</p>
+                </div>
+                
+                <div class="vendor-details" data-vendor="zte" style="display:none;">
+                    <h6 style="color: #60a5fa;">ZTE OLT</h6>
+                    <p><strong>Connection:</strong> SSH or Telnet</p>
+                    <p><strong>Method:</strong> FTP Upload</p>
+                    <p><strong>Output:</strong> startrun.dat file</p>
+                    <p class="form-text">Requires FTP server enabled. ZTE uploads config via FTP.</p>
+                </div>
+                
+                <div class="vendor-details" data-vendor="juniper" style="display:none;">
+                    <h6 style="color: #4ade80;">Juniper</h6>
+                    <p><strong>Connection:</strong> SSH only</p>
+                    <p><strong>Command:</strong> <code>show configuration | display set</code></p>
+                    <p><strong>Output:</strong> .txt file</p>
+                </div>
+                
+                <div class="vendor-details" data-vendor="generic" style="display:none;">
+                    <h6 style="color: #94a3b8;">Generic (Running Config)</h6>
+                    <p><strong>Connection:</strong> SSH or Telnet</p>
+                    <p><strong>Command:</strong> <code>show running-config</code></p>
+                    <p><strong>Output:</strong> .txt file</p>
+                    <p class="form-text">For DCN, whitebox switches, or devices with Cisco-like CLI</p>
+                </div>
+                
+                <div class="vendor-details" data-vendor="generic-saved" style="display:none;">
+                    <h6 style="color: #94a3b8;">Generic (Saved Config)</h6>
+                    <p><strong>Connection:</strong> SSH or Telnet</p>
+                    <p><strong>Command:</strong> <code>show saved-config</code></p>
+                    <p><strong>Output:</strong> .txt file</p>
+                    <p class="form-text">For devices that use <code>show saved-config</code> command</p>
+                </div>
+                
+                <div class="vendor-details" data-vendor="generic-startup" style="display:none;">
+                    <h6 style="color: #94a3b8;">Generic (Startup Config)</h6>
+                    <p><strong>Connection:</strong> SSH or Telnet</p>
+                    <p><strong>Command:</strong> <code>show startup-config</code></p>
+                    <p><strong>Output:</strong> .txt file</p>
+                    <p class="form-text">For devices that use <code>show startup-config</code> command</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <i class="bi bi-shield-lock"></i> Security Note
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">
+                    <strong>Read-Only Access:</strong> LeuitCSS only executes predefined backup commands. 
+                    No configuration changes are made to devices.
+                </p>
+                <p class="small mb-0">
+                    <strong>Credentials:</strong> Stored encrypted using AES-256. 
+                    Master key is managed via environment variable.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if device %}
+<!-- Delete Device Modal -->
+<div class="modal fade" id="deleteDeviceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-danger"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete device <strong>{{ device.name }}</strong>?</p>
+                <p class="form-text mb-0">
+                    <i class="bi bi-info-circle"></i> This will also delete all associated schedules. Backup history will be preserved.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('main.device_delete', device_id=device.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const vendorSelect = document.getElementById('vendor');
+    const vendorDetails = document.querySelectorAll('.vendor-details');
+    const vendorInfo = document.getElementById('vendor-info');
+    const portInput = document.getElementById('port');
+    
+    // Vendor info update
+    function updateVendorInfo() {
+        const selected = vendorSelect.value;
+        vendorDetails.forEach(function(el) {
+            el.style.display = el.dataset.vendor === selected ? 'block' : 'none';
+        });
+        vendorInfo.querySelector('p').style.display = selected ? 'none' : 'block';
+    }
+    
+    vendorSelect.addEventListener('change', updateVendorInfo);
+    updateVendorInfo();
+    
+    // Port field - only allow numeric input
+    portInput.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+    
+    // Prevent non-numeric paste
+    portInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const numericOnly = pastedText.replace(/[^0-9]/g, '');
+        this.value = numericOnly;
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{# 
+  LeuitCSS - Vendor Logo Macro
+  Reusable component untuk menampilkan logo vendor
+  
+  Usage:
+    {% from "macros/vendor.html" import vendor_logo, vendor_badge %}
+    {{ vendor_logo('mikrotik', 'sm') }}
+    {{ vendor_badge('cisco') }}
+#}
+
+{# 
+  Vendor Logo Image
+  Parameters:
+    - vendor: string (mikrotik, cisco, huawei, zte, juniper)
+    - size: string (xs, sm, md, lg) - default: sm
+    - class: additional CSS classes
+#}
+{% macro vendor_logo(vendor, size='sm', class='') %}
+{%- set sizes = {'xs': '14px', 'sm': '20px', 'md': '28px', 'lg': '36px'} -%}
+{%- set height = sizes.get(size, '20px') -%}
+<img src="{{ url_for('static', filename='assets/vendors/' ~ vendor|lower ~ '.svg') }}" 
+     alt="{{ vendor|upper }}" 
+     class="vendor-logo vendor-logo-{{ size }} {{ class }}"
+     style="height: {{ height }}; width: auto; vertical-align: middle;"
+     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
+><span class="vendor-fallback badge badge-vendor badge-{{ vendor|lower }}" style="display: none;">{{ vendor|upper }}</span>
+{%- endmacro %}
+
+{#
+  Vendor Badge with Logo
+  Combines logo + text badge
+  Parameters:
+    - vendor: string
+    - show_text: boolean - show vendor name text (default: true)
+    - size: string (xs, sm, md)
+#}
+{% macro vendor_badge(vendor, show_text=true, size='sm') %}
+<span class="vendor-badge-wrapper d-inline-flex align-items-center gap-1">
+    {{ vendor_logo(vendor, size) }}
+    {% if show_text %}
+    <span class="vendor-name">{{ vendor|upper }}</span>
+    {% endif %}
+</span>
+{%- endmacro %}
+
+{#
+  Vendor Logo Only (for tables/compact views)
+  Parameters:
+    - vendor: string
+    - title: optional tooltip
+#}
+{% macro vendor_icon(vendor, title='') %}
+{%- set tooltip = title if title else vendor|upper -%}
+<img src="{{ url_for('static', filename='assets/vendors/' ~ vendor|lower ~ '.svg') }}" 
+     alt="{{ vendor|upper }}" 
+     class="vendor-icon"
+     title="{{ tooltip }}"
+     style="height: 16px; width: auto; vertical-align: middle; opacity: 0.85;"
+     onerror="this.outerHTML='<span class=\'badge badge-vendor badge-{{ vendor|lower }}\' style=\'font-size:0.65rem;padding:2px 6px;\'>{{ vendor|upper }}</span>';"
+>
+{%- endmacro %}
